@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>বাইক রেসিং</title>
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jnashourov.github.io/bike-racing/">
+<meta property="og:title" content="বাইক রেসিং">
+<meta property="og:description" content="ঢাকার রাস্তায় বাইক রেস! ৩ ল্যাপে প্রতিদ্বন্দ্বীদের হারিয়ে প্রথম হও — নাইট্রো নাও, ট্রাফিক এড়াও, ঢাকার বাইক চ্যাম্পিয়ন হও। ফোনেই খেলো।">
+<meta property="og:image" content="https://jnashourov.github.io/bike-racing/cover.jpg">
+<meta property="og:image:width" content="2240">
+<meta property="og:image:height" content="1120">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="বাইক রেসিং">
+<meta name="twitter:description" content="ঢাকার রাস্তায় বাইক রেস! ৩ ল্যাপে প্রতিদ্বন্দ্বীদের হারিয়ে প্রথম হও — নাইট্রো নাও, ট্রাফিক এড়াও, ঢাকার বাইক চ্যাম্পিয়ন হও। ফোনেই খেলো।">
+<meta name="twitter:image" content="https://jnashourov.github.io/bike-racing/cover.jpg">
+<meta name="description" content="ঢাকার রাস্তায় বাইক রেস! ৩ ল্যাপে প্রতিদ্বন্দ্বীদের হারিয়ে প্রথম হও — নাইট্রো নাও, ট্রাফিক এড়াও, ঢাকার বাইক চ্যাম্পিয়ন হও। ফোনেই খেলো।">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --hud-bg: rgba(10,14,22,.72);
+    --hud-fg:#f4f7fb;
+    --panel-bg:#101826;
+    --panel-fg:#eef3fa;
+    --accent:#ffb020;
+    --accent2:#22c55e;
+    --danger:#ef4444;
+    --btn-bg: rgba(12,18,28,.55);
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --hud-bg: rgba(10,14,22,.72); }
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; background:#0b1220; }
+  body{ font-family:"Hind Siliguri", system-ui, sans-serif; }
+  button{ font-family:inherit; min-height:2.25rem; cursor:pointer; }
+
+  #game{ position:fixed; inset:0; width:100vw; height:100dvh; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #cv{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #game.shake #cv{ animation:shake .35s linear; }
+  @keyframes shake{ 0%{transform:translate(0,0)} 20%{transform:translate(-9px,4px)} 40%{transform:translate(8px,-5px)} 60%{transform:translate(-6px,-3px)} 80%{transform:translate(5px,3px)} 100%{transform:translate(0,0)} }
+
+  /* ===== slim top HUD ===== */
+  #hud{
+    position:absolute; top:0; left:0; right:0; z-index:20;
+    display:flex; align-items:center; gap:.55rem;
+    padding:.28rem .6rem calc(.28rem + env(safe-area-inset-top,0px)*0) .6rem;
+    background:var(--hud-bg); color:var(--hud-fg);
+    font-size:clamp(.8rem, 2.4vw, 1.02rem); font-weight:600;
+    backdrop-filter: blur(3px);
+    white-space:nowrap; overflow:hidden;
+  }
+  #hud .cell{ display:flex; align-items:center; gap:.3rem; }
+  #hud .lbl{ opacity:.75; font-weight:500; font-size:.86em; }
+  #posVal{ color:var(--accent); font-size:1.25em; font-weight:700; min-width:2.2ch; }
+  #progWrap{ flex:1 1 auto; height:.5rem; background:rgba(255,255,255,.18); border-radius:99px; overflow:hidden; min-width:40px; }
+  #progBar{ height:100%; width:0%; background:linear-gradient(90deg,#22c55e,#ffb020); border-radius:99px; transition:width .2s linear; }
+  #nitroWrap{ width:64px; height:.5rem; background:rgba(255,255,255,.18); border-radius:99px; overflow:hidden; }
+  #nitroBar{ height:100%; width:40%; background:#38bdf8; border-radius:99px; }
+  #pauseBtn{ background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:.5rem; padding:.1rem .6rem; font-weight:700; flex:0 0 auto; }
+  @media (max-width:680px){
+    #hud{ gap:.38rem; padding:.26rem .45rem; font-size:.82rem; }
+    #progWrap{ display:none; }
+    #nitroWrap{ width:38px; }
+    #pauseBtn{ padding:.05rem .45rem; }
+    #hud .lbl{ display:none; }
+  }
+
+  /* ===== commentary & taunt bubbles ===== */
+  #commentary{
+    position:absolute; top:2.6rem; left:50%; transform:translateX(-50%); z-index:19;
+    max-width:min(92vw,560px); text-align:center;
+    color:#fff; font-weight:600; font-size:clamp(.85rem,2.6vw,1.05rem);
+    text-shadow:0 2px 8px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9);
+    pointer-events:none; opacity:0; transition:opacity .3s;
+  }
+  #taunt{
+    position:absolute; top:22%; left:50%; transform:translateX(-50%); z-index:19;
+    background:#fff; color:#14202f; font-weight:700; font-size:clamp(.85rem,2.6vw,1rem);
+    padding:.35rem .8rem; border-radius:1rem; box-shadow:0 4px 14px rgba(0,0,0,.35);
+    pointer-events:none; opacity:0; transition:opacity .25s; max-width:86vw; text-align:center;
+  }
+  #taunt::after{ content:""; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); border:8px solid transparent; border-top-color:#fff; border-bottom:0; }
+
+  /* ===== center toast / countdown ===== */
+  #toast{
+    position:absolute; top:34%; left:50%; transform:translate(-50%,-50%); z-index:22;
+    color:#fff; font-weight:700; font-size:clamp(1.3rem,5vw,2.2rem); text-align:center;
+    text-shadow:0 3px 14px rgba(0,0,0,.8); pointer-events:none; opacity:0; transition:opacity .25s;
+    width:92vw;
+  }
+  #countdown{
+    position:absolute; top:38%; left:50%; transform:translate(-50%,-50%); z-index:30;
+    color:var(--accent); font-weight:700; font-size:clamp(3.4rem,14vw,6.5rem);
+    text-shadow:0 4px 22px rgba(0,0,0,.75); pointer-events:none; display:none;
+  }
+
+  /* ===== policeman ===== */
+  #police{
+    position:absolute; right:10px; top:34%; z-index:15; width:86px; text-align:center;
+    opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s; pointer-events:none;
+  }
+  #police.show{ opacity:1; visibility:visible; }
+  #police .bubble{ background:#fff; color:#14202f; font-size:.78rem; font-weight:700; border-radius:.7rem; padding:.25rem .4rem; margin-bottom:.3rem; box-shadow:0 3px 10px rgba(0,0,0,.3); line-height:1.25; }
+  #policeArm{ transform-origin:6px 6px; animation:wave .5s ease-in-out infinite alternate; }
+  @keyframes wave{ from{ transform:rotate(-8deg);} to{ transform:rotate(38deg);} }
+
+  /* ===== news ticker ===== */
+  #ticker{
+    position:absolute; left:0; right:0; bottom:0; height:20px; z-index:14;
+    background:rgba(8,10,16,.82); color:#ffd76a; overflow:hidden;
+    font-size:.78rem; font-weight:600; line-height:20px;
+  }
+  #tickerInner{ display:inline-block; white-space:nowrap; padding-left:100%; animation:tick 30s linear infinite; }
+  @keyframes tick{ from{ transform:translateX(0);} to{ transform:translateX(-100%);} }
+
+  /* ===== touch controls: floating, no backdrop ===== */
+  #joystick{
+    position:absolute; left:14px; bottom:44px; z-index:25;
+    width:108px; height:108px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);
+    background:rgba(255,255,255,.07);
+    touch-action:none;
+  }
+  #stick{
+    position:absolute; left:50%; top:50%; width:48px; height:48px; border-radius:50%;
+    background:rgba(255,255,255,.38); border:2px solid rgba(255,255,255,.65);
+    transform:translate(-50%,-50%);
+  }
+  #btns{
+    position:absolute; right:12px; bottom:40px; z-index:25;
+    display:flex; flex-direction:column; gap:10px; align-items:center;
+  }
+  .rbtn{
+    width:60px; height:60px; border-radius:50%; border:2px solid rgba(255,255,255,.5);
+    background:var(--btn-bg); color:#fff; font-weight:700; font-size:.82rem; line-height:1.1;
+    display:flex; align-items:center; justify-content:center; text-align:center; padding:2px;
+    touch-action:none;
+  }
+  .rbtn.on{ background:rgba(255,176,32,.75); color:#20160a; }
+  #nitroBtn.on{ background:rgba(56,189,248,.8); color:#06222f; }
+  #brakeBtn.on{ background:rgba(239,68,68,.8); }
+
+  #flash{ position:absolute; inset:0; background:rgba(239,68,68,.45); z-index:18; opacity:0; pointer-events:none; transition:opacity .12s; }
+  #speedfx{ position:absolute; inset:0; z-index:11; pointer-events:none; opacity:0;
+    background:radial-gradient(ellipse at center, transparent 52%, rgba(255,255,255,.28) 100%); transition:opacity .2s; }
+
+  /* ===== big centered panels ===== */
+  .panelWrap{
+    position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
+    background:rgba(5,8,14,.45); padding:12px;
+  }
+  .panel{
+    background:var(--panel-bg); color:var(--panel-fg);
+    width:min(94vw,560px); max-height:94dvh; overflow:auto;
+    border-radius:1.1rem; padding:1.2rem 1.3rem 1.3rem;
+    box-shadow:0 18px 50px rgba(0,0,0,.55); text-align:center;
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .panel h1{ margin:.1rem 0 .3rem; font-size:clamp(1.7rem,6vw,2.5rem); line-height:1.15; color:#fff; }
+  .panel h2{ margin:.1rem 0 .4rem; font-size:clamp(1.4rem,5vw,2rem); color:#fff; }
+  .panel p{ margin:.35rem 0; font-size:clamp(1rem,3.4vw,1.13rem); line-height:1.5; }
+  .rivals{ display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin:.7rem 0; }
+  .rivalChip{ border-radius:.7rem; padding:.4rem .7rem; font-weight:700; font-size:1rem; color:#10151d; }
+  .bigBtn{
+    display:block; width:100%; margin-top:.9rem; padding:.85rem 1rem;
+    font-size:clamp(1.15rem,4.5vw,1.4rem); font-weight:700;
+    background:var(--accent); color:#221a05; border:0; border-radius:.8rem;
+  }
+  .bigBtn.green{ background:var(--accent2); color:#06180c; }
+  .bigBtn.ghost{ background:rgba(255,255,255,.12); color:#fff; }
+  .howto{ text-align:left; background:rgba(255,255,255,.06); border-radius:.8rem; padding:.6rem .9rem; margin-top:.7rem; font-size:clamp(.95rem,3.2vw,1.05rem); line-height:1.55; }
+  .resultStats{ display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin:.7rem 0 .2rem; }
+  .stat{ background:rgba(255,255,255,.07); border-radius:.8rem; padding:.5rem .9rem; min-width:104px; }
+  .stat .v{ font-size:1.45rem; font-weight:700; color:var(--accent); }
+  .stat .k{ font-size:.85rem; opacity:.8; }
+  #rotateHint{ display:none; margin-top:.5rem; color:#ffd76a; font-weight:600; }
+  @media (orientation:portrait){ #rotateHint{ display:block; } }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="speedfx"></div>
+  <div id="flash"></div>
+
+  <header id="hud">
+    <span class="cell"><span class="lbl">অবস্থান</span><span id="posVal">৪র্থ</span></span>
+    <span class="cell"><span class="lbl">ল্যাপ</span><span id="lapVal">১/৩</span></span>
+    <span class="cell"><span class="lbl">গতি</span><span><span id="speedVal">০</span><span class="unit"> কিমি/ঘণ্টা</span></span></span>
+    <span class="cell"><span class="lbl">সময়</span><span id="timeVal">০:০০</span></span>
+    <span id="progWrap"><span id="progBar" style="display:block"></span></span>
+    <span class="cell"><span class="lbl">নাইট্রো</span><span id="nitroWrap"><span id="nitroBar" style="display:block"></span></span></span>
+    <button id="pauseBtn" type="button">বিরতি</button>
+  </header>
+
+  <div id="commentary"></div>
+  <div id="taunt"></div>
+  <div id="toast"></div>
+  <div id="countdown">৩</div>
+
+  <div id="police">
+    <div class="bubble" id="policeText">সাবধানে চালাও!</div>
+    <svg viewBox="0 0 60 92" width="60" height="92" aria-hidden="true">
+      <circle cx="30" cy="12" r="9" fill="#f2c79b"/>
+      <rect x="21" y="4" width="18" height="7" rx="3" fill="#1d4ed8"/>
+      <rect x="19" y="21" width="22" height="30" rx="5" fill="#2563eb"/>
+      <g id="policeArm"><rect x="38" y="22" width="7" height="24" rx="3.5" fill="#2563eb" transform="rotate(-30 41 24)"/></g>
+      <rect x="16" y="24" width="7" height="22" rx="3.5" fill="#2563eb" transform="rotate(14 19 26)"/>
+      <rect x="22" y="50" width="7" height="30" rx="3" fill="#1e3a5f"/>
+      <rect x="32" y="50" width="7" height="30" rx="3" fill="#1e3a5f"/>
+      <rect x="20" y="79" width="11" height="5" rx="2" fill="#111"/>
+      <rect x="30" y="79" width="11" height="5" rx="2" fill="#111"/>
+    </svg>
+  </div>
+
+  <div id="ticker"><span id="tickerInner">ব্রেকিং: ঢাকার জ্যাম আজও অপরাজিত চ্যাম্পিয়ন — রেসাররা বলছেন, জ্যাম পেরোনোই আসল ট্রফি! +++ আবহাওয়া: গরমে হেলমেটের ভেতর সাউনা ফ্রি! +++ ট্রাফিক পুলিশের ঘোষণা: হর্ন বাজানোয় আজ থেকে অতিরিক্ত পয়েন্ট নয়, জরিমানা! +++ গর্ত সতর্কতা: রাস্তার গর্তগুলো এখন ল্যান্ডমার্ক হিসেবে স্বীকৃত! +++</span></div>
+
+  <div id="joystick"><div id="stick"></div></div>
+  <div id="btns">
+    <button class="rbtn" id="nitroBtn" type="button">নাইট্রো</button>
+    <button class="rbtn" id="brakeBtn" type="button">ব্রেক</button>
+  </div>
+
+  <!-- START PANEL -->
+  <div class="panelWrap" id="startPanel">
+    <div class="panel">
+      <h1>বাইক রেসিং</h1>
+      <p>ঢাকার রাস্তায় ৩ ল্যাপের ঝড়ো রেস! বাস, সিএনজি, রিকশা আর গর্ত এড়িয়ে, নাইট্রো কুড়িয়ে ৩ প্রতিদ্বন্দ্বীকে হারাও — জিতলেই তুমি <b>ঢাকার বাইক চ্যাম্পিয়ন</b>!</p>
+      <div class="rivals">
+        <span class="rivalChip" style="background:#f87171">ঝড় সুমন</span>
+        <span class="rivalChip" style="background:#fbbf24">টার্বো বাবুল</span>
+        <span class="rivalChip" style="background:#4ade80">হাওয়া রফিক</span>
+      </div>
+      <div class="howto">
+        <b>যেভাবে চালাবে:</b><br>
+        • বাম পাশের জয়স্টিক চেপে ধরলেই বাইক নিজে নিজে গতি বাড়াবে — বামে-ডানে স্টিয়ারিং, নিচে টানলে ব্রেক<br>
+        • ডান পাশের বোতাম: নাইট্রো আর ব্রেক<br>
+        • কীবোর্ড: ← → স্টিয়ারিং, ↑ বা W চেপে ধরলে অটো গতি, ↓ ব্রেক, Shift = নাইট্রো<br>
+        • নীল নাইট্রো ক্যান ছুঁলেই নাইট্রো জমবে — ধাক্কা খেলে গতি কমে যাবে!
+      </div>
+      <p id="rotateHint">ভালো খেলতে ফোনটা আড়াআড়ি (ল্যান্ডস্কেপ) করে ধরো</p>
+      <button class="bigBtn" id="startBtn" type="button">রেস শুরু করো</button>
+    </div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div class="panelWrap" id="resultPanel" hidden>
+    <div class="panel">
+      <h2 id="resTitle">রেস শেষ!</h2>
+      <p id="resText"></p>
+      <div class="resultStats">
+        <div class="stat"><div class="v" id="resPos">—</div><div class="k">তোমার অবস্থান</div></div>
+        <div class="stat"><div class="v" id="resTime">—</div><div class="k">মোট সময়</div></div>
+        <div class="stat"><div class="v" id="resTop">—</div><div class="k">সর্বোচ্চ গতি (কিমি/ঘণ্টা)</div></div>
+      </div>
+      <button class="bigBtn green" id="againBtn" type="button">আবার রেস করো</button>
+      <button class="bigBtn" id="nextBtn" type="button">পরের রেস (আরও কঠিন)</button>
+    </div>
+  </div>
+
+  <!-- PAUSE PANEL -->
+  <div class="panelWrap" id="pausePanel" hidden>
+    <div class="panel">
+      <h2>বিরতি</h2>
+      <p>রেস থেমে আছে। তৈরি হলেই আবার শুরু করো।</p>
+      <button class="bigBtn green" id="resumeBtn" type="button">আবার চালাও</button>
+      <button class="bigBtn ghost" id="restartBtn" type="button">গোড়া থেকে রেস</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var BN="০১২৩৪৫৬৭৮৯";
+function bn(n){ return String(n).replace(/[0-9]/g,function(d){return BN[+d];}); }
+function pad2(n){ return (n<10?"0":"")+n; }
+function fmtTime(s){ var m=Math.floor(s/60), ss=Math.floor(s%60); return bn(m)+":"+bn(pad2(ss)); }
+var ORD=["১ম","২য়","৩য়","৪র্থ"];
+
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var W=0,H=0,DPR=1;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=cv.clientWidth; H=cv.clientHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener("resize",resize);
+
+/* ---------- audio (tiny beeps) ---------- */
+var AC=null;
+function beep(f,d,type,v){
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    var o=AC.createOscillator(), g=AC.createGain();
+    o.type=type||"square"; o.frequency.value=f;
+    g.gain.value=v||0.05; o.connect(g); g.connect(AC.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+(d||0.12));
+    o.stop(AC.currentTime+(d||0.12));
+  }catch(e){}
+}
+
+/* ---------- game constants ---------- */
+var LAP_LEN=8000, LAPS=3, TOTAL=LAP_LEN*LAPS, VIEW=520;
+var RIVAL_DEFS=[
+  {name:"ঝড় সুমন", color:"#e23b3b", jacket:"#b91c1c", base:126},
+  {name:"টার্বো বাবুল", color:"#e8a113", jacket:"#b45309", base:133},
+  {name:"হাওয়া রফিক", color:"#2fbf5a", jacket:"#15803d", base:140}
+];
+var TAUNTS=[
+  "এই গতি নিয়ে চ্যাম্পিয়ন হবে? হা হা!",
+  "আমার ধোঁয়া খাও, ভাই!",
+  "হেলমেটটা ঠিকমতো পরেছো তো?",
+  "আমি তো ওয়ার্ম-আপ করছি মাত্র!",
+  "পেছনে থাকাই তোমার জায়গা!",
+  "ব্রেক আছে তো বাইকে? লাগবে না অবশ্য!"
+];
+var COMMENTS=[
+  "ধারাভাষ্য: কী রেস হচ্ছে আজ ঢাকার রাস্তায়!",
+  "ধারাভাষ্য: দর্শকরা উত্তেজনায় দাঁড়িয়ে গেছে!",
+  "ধারাভাষ্য: এই গতিতে জ্যামের রাজাও হার মানবে!",
+  "ধারাভাষ্য: হেলমেট ঠিক আছে, মনোবল আকাশে!",
+  "ধারাভাষ্য: রাস্তার গর্তগুলোও ভয় পাচ্ছে আজ!"
+];
+var POLICE_LINES=["সাবধানে চালাও!","হেলমেট ঠিক আছে, যাও!","সামনে জ্যাম, ধীরে!","গতি ভালো, চালিয়ে যাও!","লাইন মেনে চলো!"];
+
+/* ---------- state ---------- */
+var G=null;
+function newRace(level){
+  var rivals=RIVAL_DEFS.map(function(d,i){
+    return { name:d.name, color:d.color, jacket:d.jacket,
+      dist:16*(i+1), speed:0, base:d.base + (level-1)*6 + i*2,
+      lat:[-0.45,0.1,0.5][i], wob:Math.random()*10, finished:false, finishTime:0 };
+  });
+  var traffic=[], nitros=[], sides=[];
+  var d, r;
+  for(d=260; d<TOTAL-160; d+= 120+Math.random()*150){
+    r=Math.random();
+    var type = r<0.20?"bus" : r<0.52?"cng" : r<0.80?"rickshaw" : "pothole";
+    traffic.push({dist:d+Math.random()*40, lat:(Math.random()*1.5-0.75), type:type, hit:false});
+  }
+  for(d=650; d<TOTAL-200; d+= 620+Math.random()*380){
+    nitros.push({dist:d, lat:(Math.random()*1.3-0.65), taken:false});
+  }
+  for(d=40; d<TOTAL+600; d+= 85+Math.random()*60){
+    var side=(Math.random()<0.5?-1:1);
+    sides.push({dist:d, side:side, type:Math.random()<0.55?"building":"tree",
+      h:0.7+Math.random()*0.9, hue:Math.floor(Math.random()*5)});
+  }
+  return {
+    state:"count", countT:3.2, level:level,
+    dist:0, lat:0, speed:0, lean:0, topSpeed:0, time:0,
+    nitro:40, nitroOn:false, crashCD:0, lastPos:4,
+    rivals:rivals, traffic:traffic, nitros:nitros, sides:sides,
+    nextCp:2000, cpShown:0, commentT:4, tauntT:6, lastComment:-1,
+    finished:false, shakeT:0
+  };
+}
+
+/* ---------- input ---------- */
+var input={ steer:0, auto:false, brake:false, nitroBtn:false };
+var joy={active:false, id:null, dx:0, dy:0};
+var joyEl=document.getElementById("joystick"), stickEl=document.getElementById("stick");
+function joyPos(e){
+  var r=joyEl.getBoundingClientRect();
+  var cx=r.left+r.width/2, cy=r.top+r.height/2;
+  var dx=(e.clientX-cx)/(r.width/2), dy=(e.clientY-cy)/(r.height/2);
+  var m=Math.hypot(dx,dy); if(m>1){ dx/=m; dy/=m; }
+  return {dx:dx, dy:dy};
+}
+joyEl.addEventListener("pointerdown",function(e){ joy.active=true; joy.id=e.pointerId; joyEl.setPointerCapture(e.pointerId); var p=joyPos(e); joy.dx=p.dx; joy.dy=p.dy; e.preventDefault(); });
+joyEl.addEventListener("pointermove",function(e){ if(joy.active&&e.pointerId===joy.id){ var p=joyPos(e); joy.dx=p.dx; joy.dy=p.dy; } });
+function joyEnd(e){ if(e.pointerId===joy.id){ joy.active=false; joy.dx=0; joy.dy=0; stickEl.style.transform="translate(-50%,-50%)"; } }
+joyEl.addEventListener("pointerup",joyEnd);
+joyEl.addEventListener("pointercancel",joyEnd);
+
+function bindHold(id, key){
+  var el=document.getElementById(id);
+  function on(e){ e.preventDefault(); input[key]=true; el.classList.add("on"); }
+  function off(e){ input[key]=false; el.classList.remove("on"); }
+  el.addEventListener("pointerdown",on);
+  el.addEventListener("pointerup",off);
+  el.addEventListener("pointerleave",off);
+  el.addEventListener("pointercancel",off);
+  return el;
+}
+bindHold("nitroBtn","nitroBtn");
+bindHold("brakeBtn","brake");
+
+var keys={};
+window.addEventListener("keydown",function(e){
+  keys[e.key]=true;
+  if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].indexOf(e.key)>=0) e.preventDefault();
+});
+window.addEventListener("keyup",function(e){ keys[e.key]=false; });
+
+function readInput(){
+  var steer=joy.dx;
+  if(keys["ArrowLeft"]||keys["a"]||keys["A"]) steer-=1;
+  if(keys["ArrowRight"]||keys["d"]||keys["D"]) steer+=1;
+  steer=Math.max(-1,Math.min(1,steer));
+  input.steer=steer;
+  /* pressing / holding the control = speed builds up automatically */
+  input.auto = joy.active || !!keys["ArrowUp"] || !!keys["w"] || !!keys["W"];
+  input.brakeKey = !!keys["ArrowDown"] || !!keys["s"] || !!keys["S"] || input.brake || (joy.active && joy.dy>0.45);
+  if(input.brakeKey) input.auto=false;
+  input.nitroKey = !!keys["Shift"] || input.nitroBtn;
+  if(joy.active) stickEl.style.transform="translate(calc(-50% + "+(joy.dx*30)+"px), calc(-50% + "+(joy.dy*30)+"px))";
+}
+
+/* ---------- HUD ---------- */
+var el={
+  pos:document.getElementById("posVal"), lap:document.getElementById("lapVal"),
+  speed:document.getElementById("speedVal"), time:document.getElementById("timeVal"),
+  prog:document.getElementById("progBar"), nitro:document.getElementById("nitroBar"),
+  comm:document.getElementById("commentary"), taunt:document.getElementById("taunt"),
+  toast:document.getElementById("toast"), count:document.getElementById("countdown"),
+  police:document.getElementById("police"), policeText:document.getElementById("policeText"),
+  flash:document.getElementById("flash"), speedfx:document.getElementById("speedfx"),
+  game:document.getElementById("game")
+};
+var commTimer=null;
+function showComment(txt, dur){
+  el.comm.textContent=txt; el.comm.style.opacity=1;
+  if(commTimer) clearTimeout(commTimer);
+  commTimer=setTimeout(function(){ el.comm.style.opacity=0; }, dur||2600);
+}
+var toastTimer=null;
+function showToast(txt, dur){
+  el.toast.textContent=txt; el.toast.style.opacity=1;
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.toast.style.opacity=0; }, dur||1800);
+}
+var policeTimer=null;
+function showPolice(){
+  el.policeText.textContent=POLICE_LINES[Math.floor(Math.random()*POLICE_LINES.length)];
+  el.police.classList.add("show");
+  if(policeTimer) clearTimeout(policeTimer);
+  policeTimer=setTimeout(function(){ el.police.classList.remove("show"); }, 3000);
+}
+var tauntTimer=null;
+function showTaunt(name, txt){
+  el.taunt.textContent=name+": "+txt; el.taunt.style.opacity=1;
+  if(tauntTimer) clearTimeout(tauntTimer);
+  tauntTimer=setTimeout(function(){ el.taunt.style.opacity=0; }, 3200);
+}
+
+/* ---------- projection ---------- */
+function curveAt(dist){ return Math.sin(dist*0.0011)*0.7 + Math.sin(dist*0.00037+1.7)*0.5; }
+function project(ahead, lat){
+  var z=Math.max(0,Math.min(1, ahead/VIEW));
+  var persp=Math.pow(1-z, 2.05);
+  var horizon=H*0.40;
+  var y=horizon + (H*1.02 - horizon)*persp;
+  var roadHalf=26 + (W*0.47-26)*persp;
+  var cx=W/2 + curveAt(G.dist+ahead)*persp*W*0.16 - G.lat*roadHalf*0.9;
+  var x=cx + lat*roadHalf;
+  return {x:x, y:y, persp:persp, roadHalf:roadHalf, cx:cx, scale:0.1+persp*2.4};
+}
+function rr(x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* ---------- drawing vehicles ---------- */
+function drawBus(p, latW){
+  var w=latW*p.roadHalf, h=w*1.18, x=p.x-w/2, y=p.y-h;
+  ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(p.x,p.y+2,w*0.52,w*0.07,0,0,7); ctx.fill();
+  rr(x,y,w,h,w*0.06); ctx.fillStyle="#c2410c"; ctx.fill();
+  rr(x,y,w,h*0.30,w*0.06); ctx.fillStyle="#ea580c"; ctx.fill();
+  ctx.fillStyle="#bfe6f5"; rr(x+w*0.08,y+h*0.36,w*0.84,h*0.20,3); ctx.fill();
+  ctx.fillStyle="#f8fafc"; rr(x+w*0.10,y+h*0.62,w*0.80,h*0.16,3); ctx.fill();
+  ctx.fillStyle="#1f2937"; ctx.font="700 "+Math.max(7,w*0.13)+"px 'Hind Siliguri',sans-serif"; ctx.textAlign="center";
+  if(w>34) ctx.fillText("ঢাকা", p.x, y+h*0.745);
+  ctx.fillStyle="#111"; rr(x+w*0.06,y+h-6,w*0.16,6,3); ctx.fill(); rr(x+w*0.78,y+h-6,w*0.16,6,3); ctx.fill();
+  ctx.fillStyle="#fecaca"; rr(x+w*0.07,y+h*0.86,w*0.14,h*0.07,2); ctx.fill(); rr(x+w*0.79,y+h*0.86,w*0.14,h*0.07,2); ctx.fill();
+}
+function drawCng(p, latW){
+  var w=latW*p.roadHalf, h=w*1.02, x=p.x-w/2, y=p.y-h;
+  ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(p.x,p.y+2,w*0.5,w*0.07,0,0,7); ctx.fill();
+  rr(x+w*0.06,y+h*0.24,w*0.88,h*0.76,w*0.14); ctx.fillStyle="#15803d"; ctx.fill();
+  rr(x+w*0.14,y+h*0.02,w*0.72,h*0.30,w*0.12); ctx.fillStyle="#166534"; ctx.fill();
+  ctx.fillStyle="#d9f99d"; rr(x+w*0.20,y+h*0.08,w*0.60,h*0.18,3); ctx.fill();
+  ctx.fillStyle="#fef08a"; rr(x+w*0.38,y+h*0.52,w*0.24,h*0.10,2); ctx.fill();
+  ctx.fillStyle="#111"; rr(x+w*0.08,y+h-5,w*0.15,5,2); ctx.fill(); rr(x+w*0.77,y+h-5,w*0.15,5,2); ctx.fill();
+}
+function drawRickshaw(p, latW){
+  var w=latW*p.roadHalf, h=w*1.05, x=p.x-w/2, y=p.y-h;
+  ctx.fillStyle="rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(p.x,p.y+2,w*0.5,w*0.07,0,0,7); ctx.fill();
+  rr(x+w*0.08,y+h*0.30,w*0.84,h*0.34,w*0.1); ctx.fillStyle="#7c3aed"; ctx.fill();
+  rr(x+w*0.14,y+h*0.06,w*0.72,h*0.28,w*0.12); ctx.fillStyle="#db2777"; ctx.fill();
+  ctx.fillStyle="#fbbf24"; ctx.fillRect(x+w*0.14,y+h*0.34,w*0.72,h*0.05);
+  ctx.strokeStyle="#111"; ctx.lineWidth=Math.max(1.5,w*0.045);
+  ctx.beginPath(); ctx.arc(x+w*0.2,p.y-2,w*0.13,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+w*0.8,p.y-2,w*0.13,0,7); ctx.stroke();
+  ctx.fillStyle="#92400e"; ctx.beginPath(); ctx.arc(p.x, y+h*0.52, w*0.09,0,7); ctx.fill();
+}
+function drawPothole(p, latW){
+  var w=latW*p.roadHalf, h=w*0.30;
+  ctx.fillStyle="#191d24"; ctx.beginPath(); ctx.ellipse(p.x,p.y,w/2,h/2,0,0,7); ctx.fill();
+  ctx.fillStyle="#232830"; ctx.beginPath(); ctx.ellipse(p.x,p.y-1,w*0.34,h*0.3,0,0,7); ctx.fill();
+}
+function drawNitroPickup(p){
+  var w=Math.max(10, 0.30*p.roadHalf), h=w*1.25, x=p.x-w/2, y=p.y-h-4+Math.sin(performance.now()/280)*3;
+  ctx.fillStyle="rgba(56,189,248,.3)"; ctx.beginPath(); ctx.ellipse(p.x,p.y-h/2,w*0.95,h*0.62,0,0,7); ctx.fill();
+  rr(x,y,w,h,w*0.22); ctx.fillStyle="#0284c7"; ctx.fill();
+  rr(x+w*0.32,y-h*0.14,w*0.36,h*0.16,2); ctx.fillStyle="#7dd3fc"; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.font="700 "+Math.max(8,w*0.5)+"px sans-serif"; ctx.textAlign="center";
+  ctx.fillText("N", p.x, y+h*0.66);
+}
+var labelBoxes=[];
+function drawRivalBike(p, rv){
+  var w=0.36*p.roadHalf, h=w*1.55, x=p.x-w/2, y=p.y-h;
+  ctx.fillStyle="rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(p.x,p.y+2,w*0.42,w*0.09,0,0,7); ctx.fill();
+  ctx.fillStyle="#14181f"; rr(p.x-w*0.13,p.y-w*0.52,w*0.26,w*0.52,w*0.1); ctx.fill();
+  rr(x+w*0.18,y+h*0.42,w*0.64,h*0.34,w*0.12); ctx.fillStyle=rv.color; ctx.fill();
+  rr(x+w*0.30,y+h*0.20,w*0.40,h*0.30,w*0.1); ctx.fillStyle=rv.jacket; ctx.fill();
+  ctx.fillStyle="#f2c79b"; rr(x+w*0.06,y+h*0.30,w*0.16,h*0.30,w*0.07); ctx.fill(); rr(x+w*0.78,y+h*0.30,w*0.16,h*0.30,w*0.07); ctx.fill();
+  ctx.fillStyle=rv.color; ctx.beginPath(); ctx.arc(p.x, y+h*0.13, w*0.21, 0, 7); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.55)"; ctx.beginPath(); ctx.arc(p.x-w*0.07, y+h*0.07, w*0.07, 0, 7); ctx.fill();
+  ctx.fillStyle="#ff5a5a"; rr(p.x-w*0.05,p.y-w*0.30,w*0.10,w*0.07,2); ctx.fill();
+  if(w>26){
+    var fs=Math.max(10, Math.min(15, w*0.30));
+    ctx.font="700 "+fs+"px 'Hind Siliguri',sans-serif"; ctx.textAlign="center";
+    var tw=ctx.measureText(rv.name).width+12;
+    var ly=y-24;
+    if(ly < H*0.80){
+      for(var tries=0; tries<3; tries++){
+        var overlap=false;
+        for(var bi=0; bi<labelBoxes.length; bi++){
+          var b=labelBoxes[bi];
+          if(Math.abs(b.x-p.x) < (b.w+tw)/2 + 4 && Math.abs(b.y-ly) < 20){ overlap=true; break; }
+        }
+        if(!overlap) break;
+        ly-=23;
+      }
+      if(ly>=8){
+        labelBoxes.push({x:p.x, y:ly, w:tw});
+        ctx.fillStyle="rgba(0,0,0,.55)";
+        rr(p.x-tw/2, ly, tw, 19, 9); ctx.fill();
+        ctx.fillStyle="#fff"; ctx.fillText(rv.name, p.x, ly+14);
+      }
+    }
+  }
+}
+function drawSide(s, p){
+  var base=p.y;
+  var off=(1.05 + 0.35)*p.roadHalf;
+  var x=p.cx + s.side*off;
+  if(s.type==="tree"){
+    var hgt=(46*p.scale)*s.h;
+    ctx.strokeStyle="#5b4632"; ctx.lineWidth=Math.max(1.5,3*p.scale);
+    ctx.beginPath(); ctx.moveTo(x,base); ctx.lineTo(x,base-hgt*0.5); ctx.stroke();
+    ctx.fillStyle="#2e7d32"; ctx.beginPath(); ctx.arc(x,base-hgt*0.72,hgt*0.30,0,7); ctx.fill();
+    ctx.fillStyle="#388e3c"; ctx.beginPath(); ctx.arc(x-hgt*0.16,base-hgt*0.55,hgt*0.2,0,7); ctx.fill();
+  } else {
+    var bw=54*p.scale*s.h, bh=86*p.scale*s.h;
+    var cols=["#8d6e63","#78909c","#a1887f","#90a4ae","#bcaaa4"];
+    ctx.fillStyle=cols[s.hue];
+    ctx.fillRect(x-bw/2, base-bh, bw, bh);
+    ctx.fillStyle="rgba(255,235,160,.85)";
+    var rows=Math.max(2,Math.floor(bh/16)), colsN=Math.max(2,Math.floor(bw/13));
+    for(var i=0;i<rows;i++) for(var j=0;j<colsN;j++){
+      if(((i*7+j*3+s.hue)%4)!==0) ctx.fillRect(x-bw/2+4+j*(bw-8)/colsN, base-bh+5+i*(bh-10)/rows, Math.max(2,bw*0.1), Math.max(2,bh*0.07));
+    }
+    ctx.fillStyle="rgba(0,0,0,.2)"; ctx.fillRect(x-bw/2, base-bh, bw, 4);
+  }
+}
+
+/* ---------- player's own bike: third-person, whole bike + rider from behind ---------- */
+function drawPlayerBike(){
+  var p=project(46, G.lat);
+  var w=Math.max(58, 0.46*p.roadHalf);
+  var h=w*1.5;
+  var baseY=H*0.92;
+  var bob=Math.sin(performance.now()/90)*Math.min(2.2, G.speed*0.012);
+  ctx.fillStyle="rgba(0,0,0,.32)";
+  ctx.beginPath(); ctx.ellipse(p.x, baseY+3, w*0.46, w*0.075, 0, 0, 7); ctx.fill();
+  ctx.save();
+  ctx.translate(p.x, baseY+bob*0.4);
+  ctx.rotate((G.lean||0) + Math.sin(performance.now()/300)*0.004);
+  /* rear wheel */
+  ctx.fillStyle="#12151b"; rr(-w*0.115, -h*0.30, w*0.23, h*0.30, w*0.09); ctx.fill();
+  ctx.fillStyle="#2b3038"; rr(-w*0.06, -h*0.24, w*0.12, h*0.20, w*0.05); ctx.fill();
+  /* exhaust pipe */
+  ctx.fillStyle="#9aa3ad"; rr(w*0.13, -h*0.20, w*0.30, h*0.055, w*0.03); ctx.fill();
+  ctx.fillStyle="#6b7280"; rr(w*0.36, -h*0.205, w*0.09, h*0.065, w*0.03); ctx.fill();
+  /* tail + body (blue bike) */
+  ctx.fillStyle="#2563eb";
+  ctx.beginPath();
+  ctx.moveTo(-w*0.20, -h*0.28);
+  ctx.lineTo(w*0.20, -h*0.28);
+  ctx.lineTo(w*0.13, -h*0.52);
+  ctx.lineTo(-w*0.13, -h*0.52);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#1d4ed8"; rr(-w*0.16, -h*0.40, w*0.32, h*0.06, w*0.03); ctx.fill();
+  /* tail light */
+  ctx.fillStyle="#ff3b30"; rr(-w*0.07, -h*0.335, w*0.14, h*0.035, w*0.015); ctx.fill();
+  /* rider legs */
+  ctx.strokeStyle="#26303c"; ctx.lineCap="round"; ctx.lineWidth=w*0.115;
+  ctx.beginPath(); ctx.moveTo(-w*0.15, -h*0.52); ctx.lineTo(-w*0.30, -h*0.30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w*0.15, -h*0.52); ctx.lineTo(w*0.30, -h*0.30); ctx.stroke();
+  /* boots */
+  ctx.fillStyle="#14100c";
+  rr(-w*0.40, -h*0.315, w*0.17, h*0.045, w*0.02); ctx.fill();
+  rr(w*0.23, -h*0.315, w*0.17, h*0.045, w*0.02); ctx.fill();
+  /* rider torso (jacket with orange stripe) */
+  ctx.fillStyle="#374151"; rr(-w*0.27, -h*0.86, w*0.54, h*0.38, w*0.10); ctx.fill();
+  ctx.fillStyle="#f97316"; rr(-w*0.27, -h*0.70, w*0.54, h*0.05, w*0.02); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.16)"; rr(-w*0.05, -h*0.86, w*0.10, h*0.38, w*0.04); ctx.fill();
+  /* arms down to the handlebar grips */
+  ctx.strokeStyle="#374151"; ctx.lineWidth=w*0.10;
+  ctx.beginPath(); ctx.moveTo(-w*0.24, -h*0.80); ctx.lineTo(-w*0.36, -h*0.50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w*0.24, -h*0.80); ctx.lineTo(w*0.36, -h*0.50); ctx.stroke();
+  ctx.fillStyle="#14100c";
+  ctx.beginPath(); ctx.arc(-w*0.37, -h*0.49, w*0.055, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(w*0.37, -h*0.49, w*0.055, 0, 7); ctx.fill();
+  ctx.strokeStyle="#14181f"; ctx.lineWidth=w*0.045;
+  ctx.beginPath(); ctx.moveTo(-w*0.46, -h*0.47); ctx.lineTo(-w*0.30, -h*0.50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w*0.46, -h*0.47); ctx.lineTo(w*0.30, -h*0.50); ctx.stroke();
+  /* helmet */
+  ctx.fillStyle="#f97316"; ctx.beginPath(); ctx.arc(0, -h*0.955, w*0.185, 0, 7); ctx.fill();
+  ctx.fillStyle="#1f2937"; rr(-w*0.185, -h*0.985, w*0.37, h*0.045, w*0.02); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.5)"; ctx.beginPath(); ctx.arc(-w*0.06, -h*1.0, w*0.05, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- scene render ---------- */
+function render(){
+  var horizon=H*0.40;
+  var sky=ctx.createLinearGradient(0,0,0,horizon*1.25);
+  sky.addColorStop(0,"#2b4a7a"); sky.addColorStop(0.55,"#7fb0d8"); sky.addColorStop(1,"#f7c873");
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,horizon+2);
+  ctx.fillStyle="#ffe9a8"; ctx.beginPath(); ctx.arc(W*0.80, horizon*0.36, Math.min(34,W*0.05), 0, 7); ctx.fill();
+  /* distant skyline */
+  ctx.fillStyle="rgba(70,90,120,.55)";
+  var off=-(G.dist*0.02 % 90);
+  for(var bx=-90+off; bx<W+90; bx+=90){
+    var bh2=26+((bx*37)%40+40)%40;
+    ctx.fillRect(bx, horizon-bh2, 62, bh2);
+  }
+  /* ground */
+  ctx.fillStyle="#5d7a4a"; ctx.fillRect(0,horizon,W,H-horizon);
+  ctx.fillStyle="#67855240";
+  /* road polygon */
+  var far=project(VIEW,0), near=project(0,0);
+  ctx.beginPath();
+  ctx.moveTo(far.cx-far.roadHalf, far.y);
+  ctx.lineTo(far.cx+far.roadHalf, far.y);
+  ctx.lineTo(near.cx+near.roadHalf, near.y);
+  ctx.lineTo(near.cx-near.roadHalf, near.y);
+  ctx.closePath();
+  var rg=ctx.createLinearGradient(0,horizon,0,H);
+  rg.addColorStop(0,"#4a4f58"); rg.addColorStop(1,"#33373e");
+  ctx.fillStyle=rg; ctx.fill();
+  /* sidewalks */
+  ctx.strokeStyle="#9aa0a6"; ctx.lineCap="round";
+  /* moving edge lines + dashes */
+  var seg=44;
+  for(var d0=Math.floor(G.dist/seg)*seg; d0<G.dist+VIEW; d0+=seg){
+    var a1=d0-G.dist, a2=a1+seg*0.5;
+    if(a2<0) continue;
+    var p1=project(Math.max(a1,1),0), p2=project(Math.max(a2,1),0);
+    ctx.strokeStyle="rgba(255,255,255,.85)";
+    ctx.lineWidth=Math.max(1, 2.2*p1.persp+0.4);
+    [-0.34,0.34].forEach(function(lo){
+      var q1=project(Math.max(a1,1), lo), q2=project(Math.max(a2,1), lo);
+      ctx.beginPath(); ctx.moveTo(q1.x,q1.y); ctx.lineTo(q2.x,q2.y); ctx.stroke();
+    });
+    ctx.strokeStyle="#fbbf24"; ctx.lineWidth=Math.max(1, 2.6*p1.persp+0.4);
+    var c1=project(Math.max(a1,1),0), c2=project(Math.max(a2,1),0);
+    ctx.globalAlpha=0.55;
+    ctx.beginPath(); ctx.moveTo(c1.x,c1.y); ctx.lineTo(c2.x,c2.y); ctx.stroke();
+    ctx.globalAlpha=1;
+    /* edge stripes alternating */
+    ctx.fillStyle=((d0/seg)%2===0)?"#d33":"#eee";
+    [-1.04,1.04].forEach(function(lo){
+      var e1=project(Math.max(a1,1), lo);
+      var s=Math.max(2, 7*e1.persp+1.5);
+      ctx.fillRect(e1.x-s/2, e1.y-s, s, s);
+    });
+  }
+  /* objects far -> near */
+  var items=[];
+  G.sides.forEach(function(s){ var a=s.dist-G.dist; if(a>-30&&a<VIEW) items.push({a:a, k:"side", o:s}); });
+  G.traffic.forEach(function(t){ var a=t.dist-G.dist; if(a>-14&&a<VIEW) items.push({a:a, k:t.type, o:t}); });
+  G.nitros.forEach(function(n){ if(n.taken) return; var a=n.dist-G.dist; if(a>-10&&a<VIEW) items.push({a:a, k:"nitro", o:n}); });
+  G.rivals.forEach(function(rv){ var a=rv.dist-G.dist; if(a>-16&&a<VIEW) items.push({a:a, k:"rival", o:rv}); });
+  items.sort(function(m,n){ return n.a-m.a; });
+  labelBoxes=[];
+  items.forEach(function(it){
+    var p=project(Math.max(it.a,0.5), it.k==="side"?0:it.o.lat);
+    if(it.k==="side") drawSide(it.o,p);
+    else if(it.k==="bus") drawBus(p,0.92);
+    else if(it.k==="cng") drawCng(p,0.52);
+    else if(it.k==="rickshaw") drawRickshaw(p,0.48);
+    else if(it.k==="pothole") drawPothole(p,0.44);
+    else if(it.k==="nitro") drawNitroPickup(p);
+    else if(it.k==="rival") drawRivalBike(p,it.o);
+  });
+  drawPlayerBike();
+}
+
+/* ---------- update ---------- */
+function position(){
+  var pos=1;
+  G.rivals.forEach(function(rv){ if(rv.dist>G.dist+0.5) pos++; });
+  return pos;
+}
+function crash(kind){
+  if(G.crashCD>0) return;
+  G.crashCD=1.4;
+  G.speed=Math.min(G.speed, kind==="pothole"? G.speed*0.55 : 26);
+  el.flash.style.opacity=1;
+  setTimeout(function(){ el.flash.style.opacity=0; },130);
+  el.game.classList.remove("shake"); void el.game.offsetWidth; el.game.classList.add("shake");
+  beep(90,0.25,"sawtooth",0.08);
+  showComment(kind==="pothole" ? "ধারাভাষ্য: গর্তে ধাক্কা! ঢাকার রাস্তা বলে কথা!" : "ধারাভাষ্য: ধাক্কা! গতি কমে গেল, আবার টানো!", 2400);
+}
+function update(dt){
+  readInput();
+  if(G.state==="count"){
+    G.countT-=dt;
+    var c=Math.ceil(G.countT);
+    el.count.style.display="block";
+    el.count.textContent = G.countT>0.4 ? bn(Math.max(1,c)) : "যাও!";
+    if(G.countT<=0){ G.state="race"; el.count.style.display="none"; showComment("ধারাভাষ্য: রেস শুরু! গ্যাস দাও!",2200); beep(880,0.2,"square",0.06); }
+    else if(Math.abs(G.countT-Math.round(G.countT))<dt) beep(440,0.1,"square",0.05);
+    render(); return;
+  }
+  if(G.state!=="race") { render(); return; }
+
+  G.time+=dt;
+  /* player physics */
+  var maxSpeed = G.nitroOn? 208 : 172;
+  var accel = (input.auto?36:0) + (G.nitroOn?46:0);
+  G.speed += accel*dt;
+  G.speed -= G.speed*0.10*dt;
+  if(input.brakeKey) G.speed -= 78*dt;
+  if(!input.auto && !G.nitroOn) G.speed -= 9*dt;
+  G.speed=Math.max(0, Math.min(maxSpeed, G.speed));
+  G.nitroOn = input.nitroKey && G.nitro>0 && G.speed>30;
+  if(G.nitroOn){ G.nitro=Math.max(0, G.nitro-26*dt); }
+  el.speedfx.style.opacity = G.nitroOn?1:0;
+  if(G.speed>G.topSpeed) G.topSpeed=G.speed;
+
+  var steerPower = 1.55 * (0.35 + Math.min(1,G.speed/120)*0.85);
+  G.lat += input.steer * steerPower * dt;
+  G.lat = Math.max(-0.88, Math.min(0.88, G.lat));
+  G.lean += ((input.steer*0.30) - G.lean)*Math.min(1, dt*7);
+  G.dist += (G.speed/3.6)*dt;
+  if(G.crashCD>0) G.crashCD-=dt;
+
+  /* rivals AI */
+  G.rivals.forEach(function(rv, i){
+    rv.wob+=dt;
+    var target=rv.base + Math.sin(rv.wob*0.55+i*2)*7;
+    if(rv.dist < G.dist-160) target+=9;
+    if(rv.dist > G.dist+220) target-=8;
+    rv.speed += (target-rv.speed)*Math.min(1,dt*0.7);
+    rv.dist += (rv.speed/3.6)*dt;
+    rv.lat += Math.sin(rv.wob*0.8+i)*0.14*dt;
+    rv.lat=Math.max(-0.7,Math.min(0.7,rv.lat));
+    if(rv.dist>=TOTAL && !rv.finished){ rv.finished=true; rv.finishTime=G.time; }
+  });
+
+  /* collisions + pickups */
+  G.traffic.forEach(function(t){
+    var a=t.dist-G.dist;
+    if(a>-6 && a<11 && Math.abs(t.lat-G.lat) < (t.type==="pothole"?0.30:0.42)){
+      if(!t.hit){ t.hit=true; crash(t.type); if(t.type!=="pothole") G.nitro=Math.max(0,G.nitro-8); }
+    }
+    if(a<-30) t.hit=false;
+  });
+  G.nitros.forEach(function(n){
+    if(n.taken) return;
+    var a=n.dist-G.dist;
+    if(a>-6 && a<12 && Math.abs(n.lat-G.lat)<0.42){
+      n.taken=true; G.nitro=Math.min(100, G.nitro+38);
+      showToast("নাইট্রো পেলে! +"+bn(38), 1100);
+      beep(1200,0.12,"sine",0.06);
+    }
+  });
+
+  /* checkpoints */
+  if(G.dist>=G.nextCp && G.dist<TOTAL){
+    showToast("চেকপয়েন্ট পার হলে! "+bn(Math.floor(G.dist/1000))+" কিমি", 1500);
+    showPolice();
+    G.nextCp+=2000;
+  }
+  var lapNow=Math.min(LAPS, Math.floor(G.dist/LAP_LEN)+1);
+  if(lapNow>G.cpShown+1 || (G.cpShown===0&&lapNow===1)){ /* lap toast below */ }
+  if(G._lap!==lapNow){
+    if(G._lap!==undefined && lapNow<=LAPS) { showToast(lapNow===LAPS? "শেষ ল্যাপ! সর্বশক্তি দাও!" : "ল্যাপ "+bn(lapNow)+" শুরু!", 1900); beep(660,0.15,"square",0.05); }
+    G._lap=lapNow;
+  }
+
+  /* position changes */
+  var pos=position();
+  if(pos<G.lastPos){
+    var passed=G.rivals.filter(function(rv){ return rv.dist<G.dist; });
+    showComment("ধারাভাষ্য: দারুণ ওভারটেক! এখন তুমি "+ORD[pos-1]+"!", 2400);
+    beep(990,0.12,"sine",0.05);
+  } else if(pos>G.lastPos){
+    showComment("ধারাভাষ্য: ওহো! পেছনে পড়ে গেলে — আবার টানো!", 2200);
+  }
+  G.lastPos=pos;
+
+  /* commentary rotation */
+  G.commentT-=dt;
+  if(G.commentT<=0){
+    G.commentT=9;
+    var idx; do{ idx=Math.floor(Math.random()*COMMENTS.length); }while(idx===G.lastComment);
+    G.lastComment=idx; showComment(COMMENTS[idx], 2600);
+  }
+  /* taunts */
+  G.tauntT-=dt;
+  if(G.tauntT<=0){
+    G.tauntT=8+Math.random()*5;
+    var ahead=G.rivals.filter(function(rv){ var a=rv.dist-G.dist; return a>4&&a<85; });
+    if(ahead.length){
+      var rv=ahead[Math.floor(Math.random()*ahead.length)];
+      showTaunt(rv.name, TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);
+    }
+  }
+
+  /* HUD */
+  el.pos.textContent=ORD[pos-1];
+  el.lap.textContent=bn(lapNow)+"/"+bn(LAPS);
+  var spd=Math.round(G.speed);
+  el.speed.textContent=bn(spd);
+  el.time.textContent=fmtTime(G.time);
+  el.prog.style.width=Math.min(100, G.dist/TOTAL*100)+"%";
+  el.nitro.style.width=G.nitro+"%";
+
+  /* finish */
+  if(G.dist>=TOTAL){
+    G.state="done"; G.finished=true;
+    finishRace(pos);
+  }
+  render();
+}
+
+function finishRace(pos){
+  el.speedfx.style.opacity=0;
+  var t=document.getElementById("resTitle"), x=document.getElementById("resText");
+  if(pos===1){
+    t.textContent="তুমিই ঢাকার বাইক চ্যাম্পিয়ন!";
+    x.textContent="অবিশ্বাস্য! ৩ ল্যাপে সবাইকে পেছনে ফেলে প্রথম হলে। ঢাকার রাস্তা আজ তোমার!";
+    beep(784,0.16,"square",0.06); setTimeout(function(){beep(988,0.16,"square",0.06);},170); setTimeout(function(){beep(1175,0.3,"square",0.06);},340);
+  } else {
+    t.textContent="রেস শেষ — তুমি "+ORD[pos-1];
+    x.textContent="প্রথম হতে পারলে না এবার। ধাক্কা এড়িয়ে নাইট্রো ঠিক সময়ে ব্যবহার করলেই পরের বার ট্রফি তোমার!";
+  }
+  document.getElementById("resPos").textContent=ORD[pos-1];
+  document.getElementById("resTime").textContent=fmtTime(G.time);
+  document.getElementById("resTop").textContent=bn(Math.round(G.topSpeed));
+  document.getElementById("nextBtn").textContent = pos===1 ? "পরের রেস (আরও কঠিন)" : "আবার চেষ্টা — কঠিন মোড";
+  document.getElementById("resultPanel").hidden=false;
+}
+
+/* ---------- main loop ---------- */
+var lastT=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!G) return;
+  var dt=Math.min(0.05,(ts-lastT)/1000||0.016); lastT=ts;
+  if(G.state==="pause"){ return; }
+  update(dt);
+}
+requestAnimationFrame(loop);
+
+/* ---------- controls wiring ---------- */
+var level=1, prevState="race";
+function startRace(lv){
+  level=lv;
+  G=newRace(lv); G._lap=undefined;
+  document.getElementById("startPanel").style.display="none";
+  document.getElementById("resultPanel").hidden=true;
+  document.getElementById("pausePanel").hidden=true;
+  el.pos.textContent="৪র্থ"; el.lap.textContent="১/৩"; el.speed.textContent="০"; el.time.textContent="০:০০";
+  el.prog.style.width="0%"; el.nitro.style.width="40%";
+  resize();
+}
+document.getElementById("startBtn").addEventListener("click",function(){
+  beep(660,0.1,"square",0.05);
+  try{ var g=document.getElementById("game"); if(g.requestFullscreen) g.requestFullscreen().catch(function(){}); }catch(e){}
+  startRace(1);
+});
+document.getElementById("againBtn").addEventListener("click",function(){ startRace(level); });
+document.getElementById("nextBtn").addEventListener("click",function(){ startRace(level+1); });
+document.getElementById("pauseBtn").addEventListener("click",function(){
+  if(!G || G.state==="done") return;
+  prevState=G.state; G.state="pause";
+  document.getElementById("pausePanel").hidden=false;
+});
+document.getElementById("resumeBtn").addEventListener("click",function(){
+  document.getElementById("pausePanel").hidden=true;
+  if(G) G.state = prevState==="count" ? "count" : "race";
+});
+document.getElementById("restartBtn").addEventListener("click",function(){ startRace(level); });
+
+/* idle background race scene behind start panel */
+G=newRace(1); G.state="idle"; G.speed=55;
+(function idleScene(){
+  /* gentle auto-scroll for menu backdrop */
+  setInterval(function(){
+    if(G && G.state==="idle"){ G.dist+=4.2; G.speed=55; render(); }
+  }, 50);
+})();
+resize();
+render();
+})();
+</script>
+</body>
+</html>
